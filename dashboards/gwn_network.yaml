@@ -1,0 +1,236 @@
+# Grandstream GWN network dashboard (built-in cards only, no custom cards needed).
+#
+# Install: Settings > Dashboards > Add dashboard > "New dashboard from scratch",
+# name it "Network", open it, click the pencil, then the three-dot menu >
+# "Raw configuration editor", and replace everything with this file.
+#
+# This is a template. Before pasting, find and replace these with your own IDs
+# (Settings > Devices & services > Grandstream GWN > Entities lists them):
+#   gwn_home_network  -> your network name   ("Home Network" in GWN)
+#   gwn7062e_1a2b     -> your router         (model + last 4 of its MAC)
+#   gwn7660e_3c4d     -> your access point
+#   wi_fi_gwn         -> your SSID           ("wi_fi_" + SSID name)
+# Copy a device's "entities" card for each extra router, switch or AP.
+
+title: Network
+views:
+  - title: Network
+    path: network
+    icon: mdi:lan
+    type: sections
+    max_columns: 4
+    sections:
+      # ------------------------------------------------------------ overview
+      - type: grid
+        cards:
+          - type: heading
+            heading: Home Network
+            icon: mdi:lan
+          - type: tile
+            entity: sensor.gwn_home_network_routers_online
+            name: Routers
+            icon: mdi:router-network
+          - type: tile
+            entity: sensor.gwn_home_network_switches_online
+            name: Switches
+            icon: mdi:switch
+          - type: tile
+            entity: sensor.gwn_home_network_access_points_online
+            name: Access points
+            icon: mdi:access-point
+          - type: tile
+            entity: sensor.gwn_home_network_connected_clients
+            name: Clients
+            icon: mdi:devices
+          - type: tile
+            entity: sensor.gwn_home_network_wireless_clients
+            name: Wireless
+            icon: mdi:wifi
+          - type: tile
+            entity: sensor.gwn_home_network_wired_clients
+            name: Wired
+            icon: mdi:ethernet
+
+      # ------------------------------------------------------------ internet
+      - type: grid
+        cards:
+          - type: heading
+            heading: Internet
+            icon: mdi:web
+          - type: tile
+            entity: binary_sensor.gwn7062e_1a2b_wan
+            name: WAN
+          - type: tile
+            entity: sensor.gwn7062e_1a2b_wan_ip
+            name: WAN IP
+            icon: mdi:ip-network
+          - type: tile
+            entity: sensor.gwn7062e_1a2b_wan_download_rate
+            name: Download
+            icon: mdi:arrow-down-bold
+          - type: tile
+            entity: sensor.gwn7062e_1a2b_wan_upload_rate
+            name: Upload
+            icon: mdi:arrow-up-bold
+          - type: history-graph
+            title: WAN rate
+            hours_to_show: 24
+            entities:
+              - entity: sensor.gwn7062e_1a2b_wan_download_rate
+                name: Download
+              - entity: sensor.gwn7062e_1a2b_wan_upload_rate
+                name: Upload
+
+      # ----------------------------------------------------------- bandwidth
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Bandwidth usage
+            icon: mdi:chart-line
+          - type: history-graph
+            title: Last 2 hours
+            hours_to_show: 2
+            entities:
+              - entity: sensor.gwn_home_network_download_rate
+                name: Download
+              - entity: sensor.gwn_home_network_upload_rate
+                name: Upload
+          - type: statistics-graph
+            title: Last 7 days (hourly average)
+            chart_type: line
+            period: hour
+            days_to_show: 7
+            stat_types: [mean, max]
+            entities:
+              - entity: sensor.gwn_home_network_download_rate
+                name: Download
+              - entity: sensor.gwn_home_network_upload_rate
+                name: Upload
+          - type: tile
+            entity: sensor.gwn7062e_1a2b_download
+            name: Downloaded since router boot
+            icon: mdi:download
+          - type: tile
+            entity: sensor.gwn7062e_1a2b_upload
+            name: Uploaded since router boot
+            icon: mdi:upload
+
+      # ------------------------------------------------------------- clients
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Clients
+            icon: mdi:account-group
+          - type: history-graph
+            title: Clients count
+            hours_to_show: 24
+            entities:
+              - entity: sensor.gwn_home_network_wireless_clients
+                name: Wireless
+              - entity: sensor.gwn_home_network_wired_clients
+                name: Wired
+          - type: markdown
+            title: Connected clients
+            grid_options:
+              columns: full
+            content: |-
+              {% set trackers = states.device_tracker
+                 | selectattr('entity_id', 'in', integration_entities('grandstream_gwn'))
+                 | sort(attribute='name') | list %}
+              {% if trackers | count == 0 %}
+              No clients tracked yet.
+              {% else %}
+              | | Client | SSID / port | AP | Band | Signal | IP | OS |
+              |---|---|---|---|---|---|---|---|
+              {% for s in trackers -%}
+              | {{ '🟢' if s.state == 'home' else '⚪' }} | {{ s.name }} | {{ s.attributes.ssid | default(s.attributes.port | default('wired')) }} | {{ s.attributes.ap_name | default('–') }} | {{ s.attributes.band | default('–') }} | {{ (s.attributes.rssi ~ ' dBm') if s.attributes.rssi is defined else '–' }} | {{ s.attributes.ip | default('–') }} | {{ s.attributes.os | default('–') }} |
+              {% endfor %}
+              {% endif %}
+          - type: markdown
+            title: Client OS
+            content: |-
+              {% set data = state_attr('sensor.gwn_home_network_connected_clients', 'by_os') or {} %}
+              {% set total = data.values() | sum %}
+              {% for name, count in data.items() -%}
+              **{{ name }}** {{ '▰' * ((count / total * 20) | round(0, 'ceil') | int) }} {{ count }} ({{ (count / total * 100) | round(0) | int }}%)<br>
+              {% else %}No clients connected.{% endfor %}
+          - type: markdown
+            title: Client manufacturer
+            content: |-
+              {% set data = state_attr('sensor.gwn_home_network_connected_clients', 'by_manufacturer') or {} %}
+              {% set total = data.values() | sum %}
+              {% for name, count in data.items() -%}
+              **{{ name }}** {{ '▰' * ((count / total * 20) | round(0, 'ceil') | int) }} {{ count }} ({{ (count / total * 100) | round(0) | int }}%)<br>
+              {% else %}No clients connected.{% endfor %}
+
+      # ------------------------------------------------------------- devices
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Devices
+            icon: mdi:router-wireless
+          - type: entities
+            title: GWN7062E router (1A2B)
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.gwn7062e_1a2b_connectivity
+                name: Status
+              - entity: sensor.gwn7062e_1a2b_clients
+                name: Clients
+              - entity: sensor.gwn7062e_1a2b_download_rate
+                name: Download rate
+              - entity: sensor.gwn7062e_1a2b_upload_rate
+                name: Upload rate
+              - entity: sensor.gwn7062e_1a2b_temperature
+                name: Temperature
+              - entity: sensor.gwn7062e_1a2b_load_average
+                name: Load
+              - entity: sensor.gwn7062e_1a2b_memory_used
+                name: Memory used
+              - entity: sensor.gwn7062e_1a2b_ip_address
+                name: LAN IP
+              - entity: button.gwn7062e_1a2b_restart
+                name: Restart
+          - type: entities
+            title: GWN7660E access point (3C4D)
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.gwn7660e_3c4d_connectivity
+                name: Status
+              - entity: sensor.gwn7660e_3c4d_clients
+                name: Clients
+              - entity: sensor.gwn7660e_3c4d_download_rate
+                name: Download rate
+              - entity: sensor.gwn7660e_3c4d_upload_rate
+                name: Upload rate
+              - entity: sensor.gwn7660e_3c4d_temperature
+                name: Temperature
+              - entity: sensor.gwn7660e_3c4d_cpu_usage
+                name: CPU
+              - entity: sensor.gwn7660e_3c4d_memory_used
+                name: Memory used
+              - entity: sensor.gwn7660e_3c4d_ip_address
+                name: IP
+              - entity: button.gwn7660e_3c4d_restart
+                name: Restart
+
+      # --------------------------------------------------------------- wi-fi
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wi-Fi
+            icon: mdi:wifi-cog
+          - type: tile
+            entity: switch.wi_fi_gwn_enabled
+            name: GWN
+            icon: mdi:wifi
+            features_position: inline
+            features:
+              - type: toggle
+          - type: tile
+            entity: sensor.wi_fi_gwn_clients
+            name: GWN clients
+            icon: mdi:cellphone-wireless

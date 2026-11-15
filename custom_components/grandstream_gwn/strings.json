@@ -1,0 +1,142 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to GWN Manager or GWN.Cloud",
+        "description": "Turn on API Developer Mode in GWN Manager (System > API Developer Mode) to get an App ID and Secret Key. Use your local GWN Manager URL, e.g. https://192.168.1.10:8443, or your GWN.Cloud region, e.g. https://www.gwn.cloud.",
+        "data": {
+          "url": "Controller URL",
+          "app_id": "App ID",
+          "app_secret": "Secret Key",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "verify_ssl": "Leave off for a local GWN Manager with a self-signed certificate."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-enter Secret Key",
+        "data": {
+          "app_secret": "Secret Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the controller.",
+      "invalid_auth": "App ID or Secret Key rejected."
+    },
+    "abort": {
+      "already_configured": "This controller is already configured.",
+      "reauth_successful": "Re-authentication successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling and presence",
+        "data": {
+          "scan_interval": "Poll interval (seconds)",
+          "away_delay": "Away delay (seconds)",
+          "detail_interval": "AP health poll interval (seconds)"
+        },
+        "data_description": {
+          "away_delay": "How long a client must be gone before it is marked away. Phones drop off Wi-Fi when sleeping.",
+          "detail_interval": "CPU, memory and temperature need one request per AP, so they are polled less often."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "clients": {
+        "name": "Clients"
+      },
+      "upload": {
+        "name": "Upload"
+      },
+      "download": {
+        "name": "Download"
+      },
+      "cpu": {
+        "name": "CPU usage"
+      },
+      "memory": {
+        "name": "Memory used"
+      },
+      "ip": {
+        "name": "IP address"
+      },
+      "connected_clients": {
+        "name": "Connected clients"
+      },
+      "ssid_clients": {
+        "name": "Clients"
+      },
+      "load": {
+        "name": "Load average"
+      },
+      "download_rate": {
+        "name": "Download rate"
+      },
+      "upload_rate": {
+        "name": "Upload rate"
+      },
+      "wan_ip": {
+        "name": "WAN IP"
+      },
+      "wan_download_rate": {
+        "name": "WAN download rate"
+      },
+      "wan_upload_rate": {
+        "name": "WAN upload rate"
+      },
+      "routers_online": {
+        "name": "Routers online"
+      },
+      "switches_online": {
+        "name": "Switches online"
+      },
+      "aps_online": {
+        "name": "Access points online"
+      },
+      "wireless_clients": {
+        "name": "Wireless clients"
+      },
+      "wired_clients": {
+        "name": "Wired clients"
+      }
+    },
+    "switch": {
+      "ssid_enabled": {
+        "name": "Enabled"
+      }
+    },
+    "binary_sensor": {
+      "wan": {
+        "name": "WAN"
+      }
+    }
+  },
+  "services": {
+    "block_client": {
+      "name": "Block client",
+      "description": "Block a client from the network.",
+      "fields": {
+        "mac": {
+          "name": "MAC address",
+          "description": "Client MAC, e.g. AA:BB:CC:DD:EE:FF."
+        }
+      }
+    },
+    "unblock_client": {
+      "name": "Unblock client",
+      "description": "Unblock a previously blocked client.",
+      "fields": {
+        "mac": {
+          "name": "MAC address",
+          "description": "Client MAC, e.g. AA:BB:CC:DD:EE:FF."
+        }
+      }
+    }
+  }
+}

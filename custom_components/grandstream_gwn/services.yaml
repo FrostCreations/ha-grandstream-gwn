@@ -1,0 +1,14 @@
+block_client:
+  fields:
+    mac:
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+unblock_client:
+  fields:
+    mac:
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:

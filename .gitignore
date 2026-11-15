@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+ha-test-config/
+gwn_dump.json
+*.dump.json
+tools/deploy_host.txt
