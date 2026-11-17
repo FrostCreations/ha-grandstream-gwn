@@ -36,7 +36,11 @@ Tested on GWN.Cloud with a GWN7062E router and a GWN7660E access point. Other GW
 
 ## Known limits
 
-* **PoE port control is not available.** The GWN API can read PoE status but cannot switch it. To power-cycle a PoE device, reboot the AP, or use a smart plug on the switch.
+* **No PoE control yet.** The GWN API has no direct PoE on/off setting. Two endpoints might still power-cycle a PoE device, but neither is implemented or tested because no GWN switch was available:
+  * `switch/port/config` can disable and re-enable a switch port (`adminStatus`). Most switches cut PoE on a disabled port, but this is unconfirmed for GWN switches, and the call needs the port's full configuration sent back.
+  * `switch/cli/command` runs a CLI command on the switch, one per call. Whether PoE can be changed that way depends on the GWN switch CLI.
+
+  If you have a GWN switch and can help test, please open an issue. Until then, to power-cycle a PoE device, use the device's own Restart button or a smart plug on the switch.
 * **SSID toggle** reads the full SSID configuration and writes all of it back with only `ssidEnable` changed, as the GWN API requires. It also sends the devices that broadcast the SSID (`bindMacs`); without that list the cloud saves the change but never pushes it to them. The integration learns that list from each device's status and saves it, so a disabled SSID can still be turned back on after a restart. Changes take 1–2 minutes to reach the devices. Confirmed working on GWN.Cloud with a GWN7062E and a GWN7660E.
 * **Client block**: the API's `block` value is inverted (0 = block), which the integration handles. Confirmed on GWN.Cloud. If blocking does the opposite on other firmware, set `BLOCK_VALUE = 1` in `api.py`. Like SSID changes, it takes 1–2 minutes to reach the device.
 * The controller refreshes traffic and RSSI only about every 90 s, but it shows connects and disconnects right away. Polling faster than about 15 s gains nothing.
